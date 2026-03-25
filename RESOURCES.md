@@ -1,6 +1,6 @@
 # References & Learning Resources
 
-This document covers the theory behind every major feature implemented in Graph-A-Thon's differntial pathtracer, with links to papers, tutorials, and code references.
+This document covers the theory behind every major feature implemented in Graph-A-Thon's differential path tracer, with links to papers, tutorials, and code references.
 
 ---
 
@@ -50,7 +50,7 @@ These are implemented in `kernels.py` as `ggx_ndf()`, `smith_g1()`, `fresnel_sch
 
 - **LearnOpenGL — PBR Theory** — [learnopengl.com/PBR/Theory](https://learnopengl.com/PBR/Theory) — Excellent walkthrough with GLSL code for every component. The GGX NDF code there is nearly identical to our `ggx_ndf()`.
 - **Brian Karis** (2013). *Specular BRDF Reference.* [graphicrants.blogspot.com](http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html) — Comprehensive reference of D, F, G function choices from a UE4 graphics programmer. Includes optimized HLSL.
-- **Burley, B.** (2012). *Physically-Based Shading at Disney.* SIGGRAPH Course. [disney-animation.s3.amazonaws.com](https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf) — Defines the Disney BRDF / metallic workflow that our material model is based on.
+- **Burley, B.** (2012). *Physically-Based Shading at Disney.* SIGGRAPH Course. [disneyanimation.com/publications/physically-based-shading-at-disney/](https://disneyanimation.com/publications/physically-based-shading-at-disney/) — Defines the Disney BRDF / metallic workflow that our material model is based on.
 - **Karis, B.** (2013). *Real Shading in Unreal Engine 4.* SIGGRAPH Course. [blog.selfshadow.com](https://blog.selfshadow.com/publications/s2013-shading-course/) — UE4's choice of D=GGX, F=Schlick, G=Smith-GGX — the exact combination we implement.
 - **Hoffman, N.** (2013). *Background: Physics and Math of Shading.* SIGGRAPH Course. [blog.selfshadow.com](https://blog.selfshadow.com/publications/s2013-shading-course/) — Deep background on microfacet theory, energy conservation, and Fresnel.
 - **Coding Labs — Cook-Torrance** — [codinglabs.net](https://www.codinglabs.net/article_physically_based_rendering_cook_torrance.aspx) — Step-by-step implementation walkthrough.
@@ -70,18 +70,7 @@ The core technique: optimize scene parameters by differentiating through the ren
 
 ---
 
-## 5. Adam Optimizer
-
-Used for geometry parameter optimization. Adam maintains per-parameter adaptive learning rates using exponential moving averages of the gradient (first moment) and squared gradient (second moment).
-
-Implemented in `geo_optimizer.py` in `_adam_step_kernel()`.
-
-- **Kingma, D.P. and Ba, J.** (2014). *Adam: A Method for Stochastic Optimization.* [arXiv:1412.6980](https://arxiv.org/abs/1412.6980) — The original Adam paper. Our implementation follows Algorithm 1 exactly: `m_t = β₁·m_{t-1} + (1-β₁)·g_t`, `v_t = β₂·v_{t-1} + (1-β₂)·g_t²`, bias correction, then `θ -= lr * m̂_t / (√v̂_t + ε)`.
-- **Ruder, S.** (2016). *An Overview of Gradient Descent Optimization Algorithms.* [arXiv:1609.04747](https://arxiv.org/abs/1609.04747) — Clear comparison of SGD, momentum, Adam, and variants. Good for understanding why Adam is better than vanilla SGD for our noisy geometry gradients.
-
----
-
-## 6. SPSA (Simultaneous Perturbation Stochastic Approximation)
+## 5. SPSA (Simultaneous Perturbation Stochastic Approximation)
 
 Used for geometry gradients and roughness/metallic gradients where analytical differentiation through the rendering equation is not possible (visibility discontinuities, complex BRDF dependence).
 
@@ -91,6 +80,17 @@ SPSA estimates the full gradient from just 2 function evaluations regardless of 
 - **Spall, J.C.** (1998). *An Overview of the Simultaneous Perturbation Method for Efficient Optimization.* Johns Hopkins APL Technical Digest, 19(4). [jhuapl.edu](https://www.jhuapl.edu/spsa/pdf-spsa/spall_an_overview.pdf) — Accessible overview with implementation guidelines and the 5-step algorithm we follow.
 - **SPSA website** — [jhuapl.edu/SPSA](https://www.jhuapl.edu/SPSA/) — Maintained by Spall himself. Includes parameter tuning guides, code, and examples.
 - **Wikipedia — SPSA** — [en.wikipedia.org](https://en.wikipedia.org/wiki/Simultaneous_perturbation_stochastic_approximation) — Good quick reference for the math.
+
+---
+
+## 6. Adam Optimizer
+
+Used for both material and geometry parameter optimization. Adam maintains per-parameter adaptive learning rates using exponential moving averages of the gradient (first moment) and squared gradient (second moment). In our geometry optimizer, Adam is paired with SPSA gradients — this combination works well because Adam's per-parameter scaling handles the noisy, high-variance gradient estimates from SPSA without manual learning rate tuning.
+
+Implemented in `geo_optimizer.py` in `_adam_step_kernel()` and in `kernels.py` for material Adam steps.
+
+- **Kingma, D.P. and Ba, J.** (2014). *Adam: A Method for Stochastic Optimization.* [arXiv:1412.6980](https://arxiv.org/abs/1412.6980) — The original Adam paper. Our implementation follows Algorithm 1 exactly: `m_t = β₁·m_{t-1} + (1-β₁)·g_t`, `v_t = β₂·v_{t-1} + (1-β₂)·g_t²`, bias correction, then `θ -= lr * m̂_t / (√v̂_t + ε)`.
+- **Ruder, S.** (2016). *An Overview of Gradient Descent Optimization Algorithms.* [arXiv:1609.04747](https://arxiv.org/abs/1609.04747) — Clear comparison of SGD, momentum, Adam, and variants. Good for understanding why Adam is better than vanilla SGD for our noisy geometry gradients.
 
 ---
 

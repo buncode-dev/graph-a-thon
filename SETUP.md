@@ -195,30 +195,20 @@ cd graph-a-thon
 
 ## 7. Set Up the Project with uv
 
-### Install a Python Version
+### Install Dependencies
 
-If the project requires a specific Python version, `uv` can install and manage it for you:
-
-```bash
-uv python install 3.12
-```
-
-### Create a Virtual Environment and Install Dependencies
-
-If the project has a `pyproject.toml` (the standard for `uv`-managed projects):
+This project uses a `pyproject.toml` to manage dependencies. Simply run:
 
 ```bash
 uv sync
 ```
 
-This creates a `.venv` in the project directory and installs all dependencies in one step.
+This will automatically install the correct Python version (3.13, as specified in `.python-version`), create a `.venv` in the project directory, and install all dependencies in one step.
 
-If you need to create an environment manually:
+If you need to install Python 3.13 explicitly first:
 
 ```bash
-uv venv
-source .venv/bin/activate    # macOS / Linux
-.venv\Scripts\activate       # Windows
+uv python install 3.13
 ```
 
 ### Adding Packages
@@ -229,9 +219,6 @@ uv add requests
 
 # Add a dev-only dependency
 uv add --dev pytest
-
-# Install from a requirements.txt 
-uv pip install -r requirements.txt
 ```
 
 ### Running Scripts
@@ -271,8 +258,7 @@ Zed will pick up the virtual environment from the project directory.
 |------|---------|
 | Check Git version | `git --version` |
 | Check uv version | `uv --version` |
-| Create virtual environment | `uv venv` |
-| Install all dependencies | `uv sync` |
+| Install dependencies | `uv sync` |
 | Add a package | `uv add <package>` |
 | Run a script | `uv run python <script>.py` |
 | Pull latest changes | `git pull` |

@@ -1,24 +1,24 @@
 # Graph-A-Thon
 <figure>
     <div style="text-align: center;">
-        <img src="misc\funnyvalentine_DaiYi_Art.jpg" alt="A image of the character funny valentine from JJBA Steel Ball Run drawn by DaiYi_Art" width="500" height="300">
+        <img src="misc/funnyvalentine_DaiYi_Art.jpg" alt="A image of the character funny valentine from JJBA Steel Ball Run drawn by DaiYi_Art" width="500" height="300">
         <figcaption>Artwork by @DaiYi_Art</figcaption>
     </div>
 </figure>
 
 ## Introduction
-Welcome to ACM SIGGRAPH @ UNLV's first Graph-A-Thon of DOOM!!! This events goal is to discover the truth and power behind spin. In order to help Johnny Joestar we need to implement a proper inverse rendering application to understand the properties of the steel balls and even their geometry!
+Welcome to ACM SIGGRAPH @ UNLV's first Graph-A-Thon of DOOM!!! This event's goal is to discover the truth and power behind spin. In order to help Johnny Joestar we need to implement a proper inverse rendering application to understand the properties of the steel balls and even their geometry!
 
-The current application is missing valuable information in regards to NEE Path Tracing, GGX Microfacet BRDF, Multi-view opimization, and Geometry Optimization! Can you figure out how to piece it all together and unlock... GOLDEN SPIN!
+The current application is missing valuable information in regards to NEE Path Tracing, GGX Microfacet BRDF, Multi-view optimization, and Geometry Optimization! Can you figure out how to piece it all together and unlock... GOLDEN SPIN!
 
 We will implement a fully (hopefully) functioning GPU-accelerated inverse rendering system built on [Taichi Lang](https://www.taichi-lang.org/). Given target images (synthetic renders), it recovers material properties and geometry by differentiating through a physically-based Monte Carlo path tracer to uncover Gyro Zeppeli's secrets.
 
 ## Resources
-To provide you guidance in this race there are three other documents you should become framiliar with after finishing this document:
+To provide you guidance in this race there are three other documents you should become familiar with after finishing this document:
 
 - [SETUP](./SETUP.md)                     Information to get your programming environment setup
 - [JOURNEY](./JOURNEY.md)               Specification of the tasks to complete
-- [Resources](./RESOURCES.md)              Reference information to help solve or understand tasks and code
+- [RESOURCES](./RESOURCES.md)              Reference information to help solve or understand tasks and code
 
 
 ## Features
@@ -32,13 +32,13 @@ To provide you guidance in this race there are three other documents you should 
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.13+
 - [Taichi](https://docs.taichi-lang.org/) 1.7+
 - NumPy
 - Matplotlib
 
 ```bash
-uv add -r requirements.txt
+uv sync
 ```
 
 ## Quick Start
@@ -171,6 +171,22 @@ Sphere positions and radii are optimized via SPSA with an Adam optimizer. The pe
 
 The loss is summed across all camera views, and gradients accumulate from each view. Multiple viewpoints constrain the optimization — a single view can confuse material color with lighting effects, but several views triangulate the true material properties.
 
+## Notes for Graphics Programmers
+
+If you're coming from Vulkan/GLSL/HLSL:
+
+| This project | Vulkan equivalent |
+|---|---|
+| `trace_sample_nee()` | Raygen shader + closest-hit + any-hit |
+| `eval_brdf()` | PBR fragment shader (same GGX math) |
+| `albedo` / `roughness` / `metallic` fields | Material UBO or push constants |
+| `scene_intersect()` | `traceRayEXT()` in RT pipeline |
+| `rng_seed` field | Per-invocation state (push constant or descriptor binding) |
+| Taichi `@ti.kernel` | `vkCmdDispatch` (compute shader launch) |
+| `render_and_grad_kernel` | No equivalent — this is the differentiable part |
+
+The fundamental addition over a standard renderer is that every floating-point operation contributes to gradient computation. The optimizer adjusts material parameters to minimize the L2 pixel error between the rendered image and the target, using the gradients to determine which direction to move each parameter.
+
 ## CLI Reference
 
 ### `train.py`
@@ -201,21 +217,6 @@ Training produces files in `output/`:
 | `iter_{NNNN}_v{N}.ppm` | Intermediate results every 50 iterations |
 | `final_v{N}.ppm` | Final optimized renders |
 | `loss_history.npy` | Loss value per iteration (numpy array) |
-
-## Notes for Graphics 
-
-If you're coming from Vulkan/GLSL/HLSL:
-
-| This project | Vulkan equivalent |
-|---|---|
-| `trace_sample_nee()` | Raygen shader + closest-hit + any-hit |
-| `eval_brdf()` | PBR fragment shader (same GGX math) |
-| `albedo` / `roughness` / `metallic` fields | Material UBO or push constants |
-| `scene_intersect()` | `traceRayEXT()` in RT pipeline |
-| Taichi `@ti.kernel` | `vkCmdDispatch` (compute shader launch) |
-| `render_and_grad_kernel` | No equivalent — this is the differentiable part |
-
-The fundamental addition over a standard renderer is that every floating-point operation contributes to gradient computation. The optimizer adjusts material parameters to minimize the L2 pixel error between the rendered image and the target, using the gradients to determine which direction to move each parameter.
 
 ## License
 
