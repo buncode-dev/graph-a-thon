@@ -1,0 +1,156 @@
+{
+  "name": "The final challenge, Golden Spin with combined GGX Spheres",
+  "description": "3 greenish, gold spheres in the cornell box",
+
+  "settings": {
+    "img_w": 256,
+    "img_h": 256,
+    "spp": 64,
+    "max_depth": 20,
+    "num_iters": 1000
+  },
+
+  "cameras": [
+    {
+      "position": [0, 1, 0.85],
+      "target": [0, 1, -0.5]
+    },
+    {
+      "position": [0.75, 1, 0.5],
+      "target": [-0.3, 0.8, -0.3]
+    },
+    {
+      "position": [-0.75, 1, 0.5],
+      "target": [0.3, 0.8, -0.3]
+    },
+    {
+      "position": [0, 1.7, 0.6],
+      "target": [0, 0.4, -0.3]
+    }
+  ],
+
+  "materials": {
+    "floor": {
+      "albedo": [0.79, 0.84, 0.2],
+      "roughness": 0.0,
+      "metallic": 0.9
+    },
+    "ceiling": {
+      "albedo": [0.71, 0.48, 0.98],
+      "roughness": 0.8,
+      "metallic": 0.0
+    },
+    "back_wall": {
+      "albedo": [0.23, 0.18, 0.18],
+      "roughness": 0.1,
+      "metallic": 0.8
+    },
+    "left_wall": {
+      "albedo": [0.74, 0.6, 0.48],
+      "roughness": 0.6,
+      "metallic": 0.0
+    },
+    "right_wall": {
+      "albedo": [1, 0.95, 0.9],
+      "roughness": 0.6,
+      "metallic": 0.0
+    },
+    "sphere_0": {
+      "albedo": [0.75, 0.66, 0.24],
+      "roughness": 0.3,
+      "metallic": 0.7
+    },
+    "sphere_1": {
+      "albedo": [0.91, 0.7, 0.72],
+      "roughness": 0.15,
+      "metallic": 0.9
+    },
+    "sphere_2": {
+      "albedo": [0.43, 0.27, 0.42],
+      "roughness": 0.7,
+      "metallic": 0.1
+    }
+  },
+
+  "emission": [18.0, 18.0, 18.0],
+
+  "quads": [
+    {
+      "name": "floor",
+      "center": [0.0, 0.0, 0.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 0.0, 1.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "floor",
+      "is_light": false
+    },
+    {
+      "name": "ceiling",
+      "center": [0.0, 2.0, 0.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 0.0, 1.0],
+      "normal": [0.0, -1.0, 0.0],
+      "material": "ceiling",
+      "is_light": false
+    },
+    {
+      "name": "back_wall",
+      "center": [0.0, 1.0, -1.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [0.0, 0.0, 1.0],
+      "material": "back_wall",
+      "is_light": false
+    },
+    {
+      "name": "left_wall",
+      "center": [-1.0, 1.0, 0.0],
+      "u": [0.0, 0.0, 1.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [1.0, 0.0, 0.0],
+      "material": "left_wall",
+      "is_light": false
+    },
+    {
+      "name": "right_wall",
+      "center": [1.0, 1.0, 0.0],
+      "u": [0.0, 0.0, 1.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [-1.0, 0.0, 0.0],
+      "material": "right_wall",
+      "is_light": false
+    },
+    {
+      "name": "area_light",
+      "center": [0.0, 1.99, 0.0],
+      "u": [0.25, 0.0, 0.0],
+      "v": [0.0, 0.0, 0.25],
+      "normal": [0.0, -1.0, 0.0],
+      "material": "ceiling",
+      "is_light": true
+    }
+  ],
+
+  "spheres": [
+    { "center": [-0.4, 0.35, -0.3], "radius": 0.35, "material": "sphere_0" },
+    { "center": [0.4, 0.55, 0.1], "radius": 0.35, "material": "sphere_1" },
+    { "center": [0.0, 0.72, 0.3], "radius": 0.35, "material": "sphere_2" }
+  ],
+
+  "initial_guess": {
+    "materials": {
+      "albedo_default": [0.5, 0.5, 0.5],
+      "roughness_default": 0.5,
+      "metallic_default": 0.3
+    },
+    "emission": [10.0, 10.0, 10.0]
+  },
+
+  "initial_guess_geometry": {
+    "spheres": [
+      { "center": [0.0, 0.3, 0.0], "radius": 0.25 },
+      { "center": [0.0, 0.5, 0.0], "radius": 0.45 },
+      { "center": [0.0, 0.1, 0.0], "radius": 0.35 }
+    ]
+  }
+}

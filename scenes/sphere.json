@@ -1,0 +1,100 @@
+{
+  "name": "Single Sphere Studio",
+  "description": "Minimal scene with one sphere on a pedestal. Good for debugging single-material convergence.",
+
+  "settings": {
+    "img_w": 256,
+    "img_h": 256,
+    "spp": 128,
+    "max_depth": 50,
+    "num_iters": 300
+  },
+
+  "cameras": [
+    { "position": [0.0, 1.0, 0.85], "target": [0.0, 0.5, 0.0] },
+    { "position": [0.7, 1.1, 0.6], "target": [0.0, 0.5, 0.0] }
+  ],
+
+  "materials": {
+    "floor": { "albedo": [0.9, 0.9, 0.9], "roughness": 0.1, "metallic": 0.0 },
+    "ceiling": { "albedo": [0.8, 0.8, 0.8], "roughness": 0.9, "metallic": 0.0 },
+    "walls": { "albedo": [0.7, 0.7, 0.7], "roughness": 0.8, "metallic": 0.0 },
+    "sphere": { "albedo": [0.85, 0.3, 0.1], "roughness": 0.2, "metallic": 0.7 }
+  },
+
+  "emission": [20.0, 20.0, 20.0],
+
+  "quads": [
+    {
+      "name": "floor",
+      "center": [0.0, 0.0, 0.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 0.0, 1.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "floor",
+      "is_light": false
+    },
+    {
+      "name": "ceiling",
+      "center": [0.0, 2.0, 0.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 0.0, 1.0],
+      "normal": [0.0, -1.0, 0.0],
+      "material": "ceiling",
+      "is_light": false
+    },
+    {
+      "name": "back_wall",
+      "center": [0.0, 1.0, -1.0],
+      "u": [1.0, 0.0, 0.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [0.0, 0.0, 1.0],
+      "material": "walls",
+      "is_light": false
+    },
+    {
+      "name": "left_wall",
+      "center": [-1.0, 1.0, 0.0],
+      "u": [0.0, 0.0, 1.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [1.0, 0.0, 0.0],
+      "material": "walls",
+      "is_light": false
+    },
+    {
+      "name": "right_wall",
+      "center": [1.0, 1.0, 0.0],
+      "u": [0.0, 0.0, 1.0],
+      "v": [0.0, 1.0, 0.0],
+      "normal": [-1.0, 0.0, 0.0],
+      "material": "walls",
+      "is_light": false
+    },
+    {
+      "name": "area_light",
+      "center": [0.0, 1.99, 0.0],
+      "u": [0.3, 0.0, 0.0],
+      "v": [0.0, 0.0, 0.3],
+      "normal": [0.0, -1.0, 0.0],
+      "material": "ceiling",
+      "is_light": true
+    }
+  ],
+
+  "spheres": [
+    { "center": [0.0, 0.5, 0.0], "radius": 0.5, "material": "sphere" }
+  ],
+
+  "initial_guess": {
+    "materials": {
+      "albedo_default": [0.5, 0.5, 0.5],
+      "roughness_default": 0.5,
+      "metallic_default": 0.3
+    },
+    "emission": [12.0, 12.0, 12.0]
+  },
+
+  "initial_guess_geometry": {
+    "spheres": [{ "center": [0.2, 0.6, 0.1], "radius": 0.35 }]
+  }
+}
