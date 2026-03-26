@@ -1,3 +1,5 @@
+hi i was able to do the first challenge
+
 # Graph-A-Thon
 <figure>
     <div style="text-align: center;">
