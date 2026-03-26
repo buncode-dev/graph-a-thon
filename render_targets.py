@@ -136,32 +136,46 @@ def init_fields():
 
 @ti.func
 def hash_u32(val: ti.u32) -> ti.u32:
+    val = ti.atomic_xor(val, val >> 16)
+    val = val * ti.u32(0x45D9F3B)
+    val = ti.atomic_xor(val, val >> 16)
+    val = val * ti.u32(0x45D9F3B)
+    val = ti.atomic_xor(val, val >> 16)
+    
     # Challenge 1
     return val
 
 
 @ti.func
 def next_rand(px: ti.i32, py: ti.i32) -> ti.f32:
+    rng_seed[px, py] = hash_u32(rng_seed[px, py])  # update the seed
+    result = ti.cast(rng_seed[px, py], ti.f32)  # convert to float
+    result /= 4294967295.0
+
     # Challenge 1
-    return 0.0
+    return result
 
 
 @ti.func
 def ggx_d(ndoth: ti.f32, alpha: ti.f32) -> ti.f32:
+    result = ((ndoth * ndoth) * (alpha * alpha - 1.0) + 1.0)
     # Challenge 1
-    return 0.0
+    return (alpha * alpha) / (PI * (result * result))
 
 
 @ti.func
 def smith_g1(ndotv: ti.f32, alpha: ti.f32) -> ti.f32:
+    g1 = 2*ndotv / (ndotv + ti.sqrt(alpha * alpha + (1.0 - alpha * alpha) * (ndotv * ndotv)))
+
     # Challenge 1
-    return 0.0
+    return g1
 
 
 @ti.func
 def fresnel_schlick(cos_theta: ti.f32, f0: tm.vec3) -> tm.vec3:
+    fres = f0 + (1 - f0) * (1 - cos_theta) ** 5
     # Challenge 1
-    return 0.0
+    return fres
 
 
 """
@@ -182,8 +196,23 @@ def eval_brdf(
     metal: ti.f32,
 ) -> tm.vec3:
     # Challenge 2
+    ndot1 = max(ti.math.dot(n, wo), 0.0)
+    ndotv = max(ti.math.dot(n, wo), EPS)
+    h = ti.math.normalize(wi + wo)
+    ndoth = max(ti.math.dot(n, h), 0.0)
+    vdoth = max(ti.math.dot(wo, h), 0.0)
+    alpha = max(rough * rough, 0.001)
+    f0 = (1.0 - metal) * (0.04 * 0.04 * 0.04) + metal * base_color
 
-    return (diff + spec) * ndotl
+    D = ggx_d(ndoth, alpha)
+    F = fresnel_schlick(vdoth, f0)
+    G = smith_g1(ndotv, alpha)
+
+    spec = F * ((D * G) / (4.0 * ndotv * ndot1 + EPS))
+    kd = (1.0 - F) * (1.0 - metal)
+    diff= kd * base_color / PI
+
+    return (diff + spec) * ndot1
 
 
 @ti.func
@@ -196,6 +225,46 @@ def scene_intersect(ray_o: tm.vec3, ray_d: tm.vec3):
     hit_light = 0
 
     # Challenge 2
+    for quad_idx in range(MAX_QUADS):
+        if quad_idx < nq:
+            p = ray_o + closest_t * ray_d
+            t = ti.math.dot(quad_center[quad_idx] - ray_o, quad_normal[quad_idx]) / ti.math.dot(ray_d, quad_normal[quad_idx])
+            pu = ti.math.dot(p - quad_center[quad_idx], quad_u[quad_idx]) / ti.math.dot(quad_u[quad_idx], quad_u[quad_idx])
+            pv = ti.math.dot(p - quad_center[quad_idx], quad_v[quad_idx]) / ti.math.dot(quad_v[quad_idx], quad_v[quad_idx])
+
+            closest_t = ti.select((0.0 < pu < 1.0) and (0.0 < pv < 1.0) and t < closest_t, t, closest_t)
+            hit_normal = ti.select((0.0 < pu < 1.0) and (0.0 < pv < 1.0) and t < closest_t, quad_normal[quad_idx], hit_normal)
+            hit_mat = ti.select((0.0 < pu < 1.0) and (0.0 < pv < 1.0) and t < closest_t, quad_mat[quad_idx], hit_mat)
+            hit_light = ti.select((0.0 < pu < 1.0) and (0.0 < pv < 1.0) and t < closest_t, quad_is_light[quad_idx], hit_light)
+
+    for sphere_idx in range(MAX_SPHERES):
+        if sphere_idx < ns:
+            oc = ray_o - sphere_center[sphere_idx]
+            a = ti.math.dot(ray_d, ray_d)
+            b = 2.0 * ti.math.dot(oc, ray_d)
+            c = ti.math.dot(oc, oc) - sphere_radius[sphere_idx] * sphere_radius[sphere_idx]
+            discriminant = b * b - 4 * a * c
+
+            t = ti.cast(1e10, ti.f32)
+            hit_sphere = False
+            if discriminant > 0:
+                sqrt_disc = ti.sqrt(discriminant)
+                t0 = (-b - sqrt_disc) / (2.0 * a)
+                t1 = (-b + sqrt_disc) / (2.0 * a)
+                t_candidate = ti.select((t0 > EPS) and (t0 < closest_t), t0, t1)
+                hit_sphere = (t_candidate > EPS) and (t_candidate < closest_t)
+
+            closest_t = ti.select(hit_sphere, t_candidate, closest_t)
+            hit_normal = ti.select(hit_sphere, ti.math.normalize((ray_o + closest_t * ray_d) - sphere_center[sphere_idx]), hit_normal)
+            hit_mat = ti.select(hit_sphere, sphere_mat[sphere_idx], hit_mat)
+            hit_light = 0  # spheres are not lights in this scene
+    
+    if discriminant > 0 and hit_sphere:
+        closest_t = t_candidate
+        hit_normal = ti.math.normalize((ray_o + closest_t * ray_d) - sphere_center[sphere_idx])
+        hit_mat = sphere_mat[sphere_idx]
+        hit_light = 0
+
     return closest_t, hit_normal, hit_mat, hit_light
 
 
@@ -210,6 +279,10 @@ def visibility_test(p: tm.vec3, target: tm.vec3) -> ti.f32:
 
     # Challenge 2
     vis = 0.0
+    if closest < dist - EPS:
+        vis = 0.0
+    else:
+        vis = 1.0
 
     return vis
 
